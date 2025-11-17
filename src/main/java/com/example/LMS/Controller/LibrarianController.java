@@ -1,5 +1,6 @@
 package com.example.LMS.Controller;
 
+import com.example.LMS.Dto.Request.AddBookRequest;
 import com.example.LMS.Dto.Request.IssueRequestDto;
 import com.example.LMS.Dto.Response.IssueResponseDto;
 import com.example.LMS.Service.LibrarianService;
@@ -27,6 +28,13 @@ public class LibrarianController {
     
         IssueResponseDto created = librarianService.createIssueRequest(dto);
         return ResponseEntity.ok(created);
+    }
+
+    //  librarian adds book
+    @PostMapping("/add-book")
+    public ResponseEntity<String> addBook(@RequestBody AddBookRequest dto) {
+        String response = librarianService.addBook(dto);
+        return ResponseEntity.ok(response);
     }
 
     // Librarian: list pending requests

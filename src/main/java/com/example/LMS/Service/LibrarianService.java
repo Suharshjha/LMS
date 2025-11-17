@@ -1,5 +1,6 @@
 package com.example.LMS.Service;
 
+import com.example.LMS.Dto.Request.AddBookRequest;
 import com.example.LMS.Dto.Request.IssueRequestDto;
 import com.example.LMS.Dto.Response.IssueResponseDto;
 import com.example.LMS.Exceptions.BadRequestException;
@@ -36,6 +37,18 @@ public class LibrarianService {
         this.userRepository = userRepository;
         this.booksRepository = booksRepository;
     }
+    //adding new books
+    public String addBook(AddBookRequest dto) {
+        Books book = new Books();
+        book.setBookName(dto.getBookName());
+        book.setAuthorName(dto.getAuthorName());
+        book.setBookCategory(dto.getBookCategory());
+        book.setNumberOfCopies(dto.getNumberOfCopies());
+        book.setPopularityScore(0);
+
+        booksRepository.save(book);
+        return "Book added successfully!";
+    }
 
     // CREATE REQUEST (can be called by a user via a public endpoint or by UI)
     public IssueResponseDto createIssueRequest(IssueRequestDto dto) {
@@ -70,7 +83,7 @@ public class LibrarianService {
                 .map(this::toDto)
                 .collect(Collectors.toList());
     }
-
+    @Transactional
     public List<IssueResponseDto> getAllIssued() {
         return issuedBookRepository.findAll().stream().map(this::toDto).collect(Collectors.toList());
     }
