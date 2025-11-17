@@ -24,17 +24,17 @@ public class UserService {
         this.librarianService = librarianService;
     }
 
-    // 1️⃣ Search books
+    //  Search books
     public List<Books> searchBooks(String keyword) {
         return booksRepository.searchBooks(keyword);
     }
 
-    // 2️⃣ User requests a book → use the librarian service logic
+    // User requests a book → use the librarian service logic
     public IssueResponseDto requestBook(IssueRequestDto dto) {
         return librarianService.createIssueRequest(dto);
     }
 
-    // 3️⃣ Books issued to this user
+    // Books issued to this user
     public List<IssueResponseDto> getIssuedBooks(Long userId) {
         return librarianService.getUserIssued(userId);
     }
