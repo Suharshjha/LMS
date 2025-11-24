@@ -1,18 +1,19 @@
 import { NavLink } from '@/components/NavLink';
 import { useAuth } from '@/contexts/AuthContext';
-import { 
-  BookOpen, 
-  Users, 
-  FileText, 
-  BookMarked, 
-  UserCheck, 
+import {
+  BookOpen,
+  Users,
+  FileText,
+  BookMarked,
+  UserCheck,
   LogOut,
   LayoutDashboard,
   Search,
-  BookCopy
+  BookCopy, Book
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
+import Books from "@/pages/admin/Books.tsx";
 
 export const Sidebar = () => {
   const { user, logout } = useAuth();
@@ -23,13 +24,14 @@ export const Sidebar = () => {
         return [
           { to: '/admin/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
           { to: '/admin/users', icon: Users, label: 'Manage Users' },
-          { to: '/admin/librarians', icon: UserCheck, label: 'Manage Librarians' },
+          { to: '/admin/librarians', icon: BookOpen, label: 'Books' },
           { to: '/admin/reports', icon: FileText, label: 'Reports' },
         ];
       case 'LIBRARIAN':
         return [
           { to: '/librarian/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
           { to: '/librarian/books', icon: BookOpen, label: 'Manage Books' },
+          { to: '/librarian/all-books', icon: Book, label: 'All Books' },
           { to: '/librarian/requests', icon: BookMarked, label: 'Issue Requests' },
           { to: '/librarian/issued', icon: BookCopy, label: 'Issued Books' },
         ];

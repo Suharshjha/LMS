@@ -27,10 +27,17 @@ public class UserController {
     }
 
     // 2️⃣ User requests to issue a book
+//    @PostMapping("/request-book")
+//    public ResponseEntity<IssueResponseDto> requestBook(@RequestBody IssueRequestDto dto) {
+//        return ResponseEntity.ok(userService.requestBook(dto));
+//    }
+
     @PostMapping("/request-book")
     public ResponseEntity<IssueResponseDto> requestBook(@RequestBody IssueRequestDto dto) {
-        return ResponseEntity.ok(userService.requestBook(dto));
+        IssueResponseDto response = userService.requestBook(dto);
+        return ResponseEntity.ok(response);  // ensure JSON body goes back
     }
+
 
     // 3️⃣ Get books issued to this user
     @GetMapping("/issued/{userId}")

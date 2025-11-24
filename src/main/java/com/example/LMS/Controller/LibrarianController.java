@@ -3,6 +3,8 @@ package com.example.LMS.Controller;
 import com.example.LMS.Dto.Request.AddBookRequest;
 import com.example.LMS.Dto.Request.IssueRequestDto;
 import com.example.LMS.Dto.Response.IssueResponseDto;
+import com.example.LMS.Models.Books;
+import com.example.LMS.Repository.BooksRepository;
 import com.example.LMS.Service.LibrarianService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -17,10 +19,14 @@ import java.util.List;
 public class LibrarianController {
 
     private final LibrarianService librarianService;
+    private final BooksRepository booksRepository;
 
-    public LibrarianController(LibrarianService librarianService) {
+    public LibrarianController(LibrarianService librarianService,
+                               BooksRepository booksRepository) {
         this.librarianService = librarianService;
+        this.booksRepository = booksRepository;
     }
+
 
     // Create an issue request (could be called by users; librarian might also create requests)
     @PostMapping("/request-issue")
@@ -28,6 +34,12 @@ public class LibrarianController {
     
         IssueResponseDto created = librarianService.createIssueRequest(dto);
         return ResponseEntity.ok(created);
+    }
+
+    // Librarian: View all books
+    @GetMapping("/all-books")
+    public ResponseEntity<List<Books>> getAllBooksForLibrarian() {
+        return ResponseEntity.ok(booksRepository.findAll());
     }
 
     //  librarian adds book

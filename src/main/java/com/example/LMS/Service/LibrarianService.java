@@ -53,6 +53,13 @@ public class LibrarianService {
     // CREATE REQUEST (can be called by a user via a public endpoint or by UI)
     public IssueResponseDto createIssueRequest(IssueRequestDto dto) {
         System.out.println("hello11...");
+
+        System.out.println("📩 Incoming IssueRequestDto:");
+        System.out.println("userId = " + dto.getUserId());
+        System.out.println("bookId = " + dto.getBookId());
+        System.out.println("dueDate = " + dto.getDueDate());
+
+
         User user = userRepository.findById(dto.getUserId())
                 .orElseThrow(() -> new ResourceNotFoundException("User not found"));
         System.out.println("hello22...");
@@ -76,6 +83,11 @@ public class LibrarianService {
         return toDto(saved);
 
     }
+
+    public List<Books> getAllBooks() {
+        return booksRepository.findAll();
+    }
+
 
     public List<IssueResponseDto> getPendingRequests() {
         return issuedBookRepository.findByStatus(IssuedBook.Status.PENDING)

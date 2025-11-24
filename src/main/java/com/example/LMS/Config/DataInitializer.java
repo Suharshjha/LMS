@@ -26,7 +26,7 @@ public class DataInitializer implements CommandLineRunner {
     public void run(String... args) throws Exception {
         String adminUsername = "admin";
         String adminEmail = "admin@example.com";
-        String rawPassword = "Admin@123"; // change this before committing
+        String rawPassword = "Admin@123";
 
         // only create if not present
         if (userRepository.findByUsername(adminUsername).isEmpty()) {

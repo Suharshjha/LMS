@@ -55,7 +55,13 @@ public class AuthService {
             System.out.println("Login successful!");
 
             // 5. Send response
-            return new LoginResponse(token, user.getUsername(), userRole);
+            return new LoginResponse(
+                    user.getUserId(),
+                    token,
+                    user.getUsername(),
+                    userRole
+            );
+
 
         } catch (RuntimeException e) {
 
