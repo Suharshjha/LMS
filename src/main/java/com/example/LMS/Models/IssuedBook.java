@@ -38,7 +38,10 @@ public class IssuedBook {
     private BigDecimal fine;
 
     public enum Status {
-        PENDING, APPROVED, REJECTED, RETURNED
+        PENDING, APPROVED, REJECTED, RETURNED,
+        RENEWAL_PENDING,    // user requested renewal
+        RENEWAL_APPROVED,   // librarian approves renewal
+        RENEWAL_REJECTED    // librarian rejects renewal
     }
 
     // Getters and setters

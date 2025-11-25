@@ -173,11 +173,17 @@
 
 
 // src/contexts/AuthContext.tsx
+// src/contexts/AuthContext.tsx
+// src/contexts/AuthContext.tsx
+
+
+// src/contexts/AuthContext.tsx
 
 import React, { createContext, useContext, useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { apiFetch } from "@/lib/api";
+
 
 export type UserRole = "ADMIN" | "LIBRARIAN" | "USER";
 
@@ -206,7 +212,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     if (saved) setUser(JSON.parse(saved));
   }, []);
 
-  // ⭐ FIXED LOGIN FUNCTION
+  // ----------------------------------------------
+  // ⭐ FIXED LOGIN FUNCTION — NOW STORES jwtToken ⭐
+  // ----------------------------------------------
   const login = async (username: string, password: string) => {
     try {
       const result = await apiFetch("/auth/login", {
@@ -214,26 +222,37 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         body: JSON.stringify({ username, password }),
       });
 
+      if (!result.token) {
+        toast.error("Login response missing token!");
+        return;
+      }
+
+
       const userData: User = {
         userId: result.userId,
         username: result.username,
         role: result.role,
-        token: result.jwtToken  // VERY IMPORTANT!!!
+        token: result.token,   // <-- FIXED HERE
       };
 
       localStorage.setItem("lms_user", JSON.stringify(userData));
       setUser(userData);
 
-    } catch (error) {
-      toast.error("Login failed");
+      toast.success(`Welcome, ${userData.username}!`);
+
+      if (userData.role === "ADMIN") navigate("/admin/dashboard");
+      else if (userData.role === "LIBRARIAN") navigate("/librarian/dashboard");
+      else navigate("/user/dashboard");
+
+    } catch (err) {
+      console.error("Login error:", err);
+      toast.error("Invalid username or password");
     }
   };
-
 
   const logout = () => {
     localStorage.removeItem("lms_user");
     setUser(null);
-    toast.info("Logged out successfully");
     navigate("/login");
   };
 
@@ -246,6 +265,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
 export const useAuth = () => {
   const ctx = useContext(AuthContext);
-  if (!ctx) throw new Error("useAuth must be used within AuthProvider");
+  if (!ctx) throw new Error("useAuth must be used inside AuthProvider");
   return ctx;
 };

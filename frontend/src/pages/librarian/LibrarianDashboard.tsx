@@ -22,15 +22,16 @@
 //   const [issuedCount, setIssuedCount] = useState(0);
 //   const [loading, setLoading] = useState(true);
 //
+//   // 🔥 LOAD DASHBOARD DATA
 //   const loadDashboard = async () => {
 //     try {
-//       const books = await apiFetch("/admin/all-books");
+//       const books = await apiFetch("/librarian/all-books");
 //       const requests = await apiFetch("/librarian/pending-requests");
 //       const issued = await apiFetch("/librarian/all-issued");
 //
-//       setTotalBooks(books.length);
-//       setPending(requests);
-//       setIssuedCount(issued.length);
+//       setTotalBooks(Array.isArray(books) ? books.length : 0);
+//       setPending(Array.isArray(requests) ? requests : []);
+//       setIssuedCount(Array.isArray(issued) ? issued.length : 0);
 //     } catch (err) {
 //       console.error(err);
 //       toast.error("Failed to load dashboard data");
@@ -39,28 +40,39 @@
 //     }
 //   };
 //
+//   // 🔥 APPROVE REQUEST
 //   const handleApprove = async (id: number) => {
 //     try {
 //       await apiFetch(`/librarian/approve/${id}`, { method: "POST" });
 //       toast.success("Request approved");
+//
 //       loadDashboard();
 //     } catch {
 //       toast.error("Failed to approve request");
 //     }
 //   };
 //
+//   // 🔥 REJECT REQUEST
 //   const handleReject = async (id: number) => {
 //     try {
 //       await apiFetch(`/librarian/reject/${id}`, { method: "POST" });
 //       toast.error("Request rejected");
+//
 //       loadDashboard();
 //     } catch {
 //       toast.error("Failed to reject request");
 //     }
 //   };
 //
+//   // 🔥 INITIAL LOAD
 //   useEffect(() => {
 //     loadDashboard();
+//
+//     // Listen for "booksUpdated" event from Add Book page
+//     const reloadHandler = () => loadDashboard();
+//     window.addEventListener("booksUpdated", reloadHandler);
+//
+//     return () => window.removeEventListener("booksUpdated", reloadHandler);
 //   }, []);
 //
 //   if (loading) {
@@ -85,7 +97,7 @@
 //           <p className="text-muted-foreground mt-1">Manage books and issue requests</p>
 //         </div>
 //
-//         {/* Stats Section */}
+//         {/* 📌 Stats Section */}
 //         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
 //           {stats.map((stat) => (
 //               <Card key={stat.title} className="shadow-soft hover:shadow-medium transition-smooth">
@@ -104,7 +116,7 @@
 //
 //         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
 //
-//           {/* Pending Requests */}
+//           {/* 📌 Pending Requests */}
 //           <Card className="shadow-soft">
 //             <CardHeader>
 //               <CardTitle className="flex justify-between items-center">
@@ -126,7 +138,9 @@
 //                     >
 //                       <div>
 //                         <p className="font-medium">{req.bookName}</p>
-//                         <p className="text-sm text-muted-foreground">Requested by: {req.userName}</p>
+//                         <p className="text-sm text-muted-foreground">
+//                           Requested by: {req.userName}
+//                         </p>
 //                       </div>
 //
 //                       <div className="flex gap-2">
@@ -143,7 +157,7 @@
 //             </CardContent>
 //           </Card>
 //
-//           {/* Quick Actions */}
+//           {/* 📌 Quick Actions */}
 //           <Card className="shadow-soft">
 //             <CardHeader>
 //               <CardTitle>Quick Actions</CardTitle>
@@ -151,7 +165,7 @@
 //             <CardContent>
 //               <div className="space-y-3">
 //
-//                 {/* A → Navigate to Add Book */}
+//                 {/* Navigate to Add Book */}
 //                 <Button
 //                     className="w-full py-4 text-left whitespace-normal"
 //                     onClick={() => navigate("/librarian/books")}
@@ -159,7 +173,7 @@
 //                   Add New Book
 //                 </Button>
 //
-//                 {/* A → Navigate to Pending Requests Page */}
+//                 {/* Navigate to Requests */}
 //                 <Button
 //                     className="w-full py-4 text-left whitespace-normal"
 //                     variant="secondary"
@@ -168,7 +182,7 @@
 //                   View All Requests
 //                 </Button>
 //
-//                 {/* A → Navigate to Issued Books Page */}
+//                 {/* Navigate to Issued Books */}
 //                 <Button
 //                     className="w-full py-4 text-left whitespace-normal"
 //                     variant="outline"
@@ -185,6 +199,7 @@
 // };
 //
 // export default LibrarianDashboard;
+//
 
 
 import { useEffect, useState } from "react";
@@ -200,6 +215,7 @@ interface IssueRequest {
   id: number;
   bookName: string;
   userName: string;
+  status: string;           // <= IMPORTANT
   requestDate: string;
 }
 
@@ -211,7 +227,7 @@ const LibrarianDashboard = () => {
   const [issuedCount, setIssuedCount] = useState(0);
   const [loading, setLoading] = useState(true);
 
-  // 🔥 LOAD DASHBOARD DATA
+  // ---------------- LOAD DASHBOARD ----------------
   const loadDashboard = async () => {
     try {
       const books = await apiFetch("/librarian/all-books");
@@ -229,35 +245,54 @@ const LibrarianDashboard = () => {
     }
   };
 
-  // 🔥 APPROVE REQUEST
+  // ---------------- APPROVE NORMAL REQUEST ----------------
   const handleApprove = async (id: number) => {
     try {
       await apiFetch(`/librarian/approve/${id}`, { method: "POST" });
       toast.success("Request approved");
-
       loadDashboard();
     } catch {
       toast.error("Failed to approve request");
     }
   };
 
-  // 🔥 REJECT REQUEST
+  // ---------------- REJECT NORMAL REQUEST ----------------
   const handleReject = async (id: number) => {
     try {
       await apiFetch(`/librarian/reject/${id}`, { method: "POST" });
       toast.error("Request rejected");
-
       loadDashboard();
     } catch {
       toast.error("Failed to reject request");
     }
   };
 
-  // 🔥 INITIAL LOAD
+  // ---------------- APPROVE RENEWAL ----------------
+  const handleRenewApprove = async (id: number) => {
+    try {
+      await apiFetch(`/librarian/renewal/approve/${id}`, { method: "POST" });
+      toast.success("Renewal approved");
+      loadDashboard();
+    } catch {
+      toast.error("Failed to approve renewal request");
+    }
+  };
+
+  // ---------------- REJECT RENEWAL ----------------
+  const handleRenewReject = async (id: number) => {
+    try {
+      await apiFetch(`/librarian/renewal/reject/${id}`, { method: "POST" });
+      toast.error("Renewal rejected");
+      loadDashboard();
+    } catch {
+      toast.error("Failed to reject renewal request");
+    }
+  };
+
+  // ---------------- ON LOAD ----------------
   useEffect(() => {
     loadDashboard();
 
-    // Listen for "booksUpdated" event from Add Book page
     const reloadHandler = () => loadDashboard();
     window.addEventListener("booksUpdated", reloadHandler);
 
@@ -286,7 +321,7 @@ const LibrarianDashboard = () => {
           <p className="text-muted-foreground mt-1">Manage books and issue requests</p>
         </div>
 
-        {/* 📌 Stats Section */}
+        {/* STATS */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           {stats.map((stat) => (
               <Card key={stat.title} className="shadow-soft hover:shadow-medium transition-smooth">
@@ -303,13 +338,14 @@ const LibrarianDashboard = () => {
           ))}
         </div>
 
+        {/* MAIN SECTION */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
 
-          {/* 📌 Pending Requests */}
+          {/* PENDING REQUESTS */}
           <Card className="shadow-soft">
             <CardHeader>
               <CardTitle className="flex justify-between items-center">
-                <span>Pending Issue Requests</span>
+                <span>Pending Requests</span>
                 <Badge variant="secondary">{pending.length}</Badge>
               </CardTitle>
             </CardHeader>
@@ -321,24 +357,33 @@ const LibrarianDashboard = () => {
                 )}
 
                 {pending.map((req) => (
-                    <div
-                        key={req.id}
-                        className="flex items-center justify-between p-4 bg-muted rounded-lg"
-                    >
+                    <div key={req.id} className="flex items-center justify-between p-4 bg-muted rounded-lg">
                       <div>
                         <p className="font-medium">{req.bookName}</p>
                         <p className="text-sm text-muted-foreground">
                           Requested by: {req.userName}
                         </p>
+                        <p className="text-xs text-muted-foreground">
+                          Request Type: <strong>{req.status}</strong>
+                        </p>
                       </div>
 
                       <div className="flex gap-2">
-                        <Button size="sm" onClick={() => handleApprove(req.id)}>
-                          Approve
-                        </Button>
-                        <Button size="sm" variant="destructive" onClick={() => handleReject(req.id)}>
-                          Reject
-                        </Button>
+                        {/* ---------- NORMAL REQUEST ---------- */}
+                        {req.status === "PENDING" && (
+                            <>
+                              <Button size="sm" onClick={() => handleApprove(req.id)}>Approve</Button>
+                              <Button size="sm" variant="destructive" onClick={() => handleReject(req.id)}>Reject</Button>
+                            </>
+                        )}
+
+                        {/* ---------- RENEWAL REQUEST ---------- */}
+                        {req.status === "RENEWAL_PENDING" && (
+                            <>
+                              <Button size="sm" onClick={() => handleRenewApprove(req.id)}>Approve Renewal</Button>
+                              <Button size="sm" variant="destructive" onClick={() => handleRenewReject(req.id)}>Reject Renewal</Button>
+                            </>
+                        )}
                       </div>
                     </div>
                 ))}
@@ -346,46 +391,31 @@ const LibrarianDashboard = () => {
             </CardContent>
           </Card>
 
-          {/* 📌 Quick Actions */}
+          {/* QUICK ACTIONS */}
           <Card className="shadow-soft">
             <CardHeader>
               <CardTitle>Quick Actions</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="space-y-3">
-
-                {/* Navigate to Add Book */}
-                <Button
-                    className="w-full py-4 text-left whitespace-normal"
-                    onClick={() => navigate("/librarian/books")}
-                >
+                <Button className="w-full py-4" onClick={() => navigate("/librarian/books")}>
                   Add New Book
                 </Button>
 
-                {/* Navigate to Requests */}
-                <Button
-                    className="w-full py-4 text-left whitespace-normal"
-                    variant="secondary"
-                    onClick={() => navigate("/librarian/requests")}
-                >
+                <Button className="w-full py-4" variant="secondary" onClick={() => navigate("/librarian/requests")}>
                   View All Requests
                 </Button>
 
-                {/* Navigate to Issued Books */}
-                <Button
-                    className="w-full py-4 text-left whitespace-normal"
-                    variant="outline"
-                    onClick={() => navigate("/librarian/issued")}
-                >
+                <Button className="w-full py-4" variant="outline" onClick={() => navigate("/librarian/issued")}>
                   Process Returns
                 </Button>
               </div>
             </CardContent>
           </Card>
+
         </div>
       </div>
   );
 };
 
 export default LibrarianDashboard;
-

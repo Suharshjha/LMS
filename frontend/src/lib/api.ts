@@ -30,7 +30,7 @@
 // }
 
 
-import { useAuth } from "@/contexts/AuthContext";
+// import { useAuth } from "@/contexts/AuthContext";
 //
 // export const apiFetch = async (url: string, options: RequestInit = {}) => {
 //     const userData = JSON.parse(localStorage.getItem("lms_user") || "null");
@@ -61,41 +61,115 @@ import { useAuth } from "@/contexts/AuthContext";
 //     }
 //
 // };
+// src/lib/api.ts
 
-export const apiFetch = async (url: string, options: RequestInit = {}) => {
-    const userData = JSON.parse(localStorage.getItem("lms_user") || "null");
-    const token = userData?.token;
+// src/lib/api.ts
 
-    const headers = {
+// export const API_BASE = "http://localhost:8080";
+//
+// export async function apiFetch(
+//     endpoint: string,
+//     options: RequestInit = {}
+// ) {
+//     const userStr = localStorage.getItem("lms_user");
+//     const user = userStr ? JSON.parse(userStr) : null;
+//
+//     const token = user?.token; // <-- Correct token (jwtToken from AuthContext)
+//
+//     const headers: HeadersInit = {
+//         "Content-Type": "application/json",
+//         ...(options.headers || {}),
+//     };
+//
+//     // Attach JWT if present
+//     if (token) {
+//         headers["Authorization"] = `Bearer ${token}`;
+//     }
+//
+//     const response = await fetch(`${API_BASE}${endpoint}`, {
+//         ...options,
+//         headers,
+//     });
+//
+//     // ---- Handle Unauthorized ----
+//     if (response.status === 401) {
+//         console.error("❌ Unauthorized — Token missing or invalid");
+//         return Promise.reject({ error: "Unauthorized", status: 401 });
+//     }
+//
+//     // ---- Handle server errors ----
+//     if (!response.ok) {
+//         let err = {};
+//         try {
+//             err = await response.json();
+//         } catch {
+//             err = { error: "Unknown error", status: response.status };
+//         }
+//         console.error("❌ API Error:", err);
+//         return Promise.reject(err);
+//     }
+//
+//     // ---- Successful ----
+//     try {
+//         return await response.json();
+//     } catch {
+//         return {};
+//     }
+// }
+
+
+const API_BASE = "http://localhost:8080";
+
+export async function apiFetch(
+    endpoint: string,
+    options: RequestInit = {}
+) {
+    // Read logged-in user from localStorage
+    const userStr = localStorage.getItem("lms_user");
+    const user = userStr ? JSON.parse(userStr) : null;
+
+    // FIX: The token is saved as user.jwtToken (NOT user.token)
+    const token = user?.jwtToken || user?.token || null;
+
+    const headers: HeadersInit = {
         "Content-Type": "application/json",
-        ...(token && { Authorization: `Bearer ${token}` }),
-        ...options.headers,
+        ...(options.headers || {}),
     };
 
-    console.log("📡 API Request:", `http://localhost:8080${url}`);
+    // Attach Bearer token if exists
+    if (token) {
+        headers["Authorization"] = `Bearer ${token}`;
+    }
 
-    const response = await fetch(`http://localhost:8080${url}`, {
+    const response = await fetch(`${API_BASE}${endpoint}`, {
         ...options,
         headers,
     });
 
+    // ❗ Handle Unauthorized
+    if (response.status === 401) {
+        console.error("❌ Unauthorized — Invalid or missing JWT");
+        localStorage.removeItem("lms_user"); // clear corrupted token
+        return Promise.reject({ error: "Unauthorized", status: 401 });
+    }
+
+    // ❗ Handle all non-OK responses
     if (!response.ok) {
-        const text = await response.text();
-        console.error(" API Error:", text);
-        throw new Error(text || "API Error");
-    }
-
-    // ---- FIX: some endpoints return empty or plain text ----
-    const raw = await response.text();
-
-    if (!raw) return "";                    // empty response
-    if (raw.startsWith("{") || raw.startsWith("[")) {
+        let err: any = {};
         try {
-            return JSON.parse(raw);         // valid JSON
+            err = await response.json();
         } catch {
-            return raw;                     // fallback
+            err = { error: "Unknown server error", status: response.status };
         }
+        console.error("❌ API Error:", err);
+        return Promise.reject(err);
     }
 
-    return raw;                             // plain text response
-};
+    // Return JSON if possible, or empty object
+    try {
+        return await response.json();
+    } catch {
+        return {};
+    }
+}
+
