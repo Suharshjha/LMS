@@ -15,33 +15,29 @@ import { apiFetch } from "@/lib/api";
 import { toast } from "sonner";
 import { RefreshCw } from "lucide-react";
 
-type Book = {
-  bookId?: number | string;
-  bookName?: string;
-  authorName?: string;
-  numberOfCopies?: number;
-  bookCategory?: string;
-  issued?: boolean;
-  issueDate?: string | null;
-  dueDate?: string | null;
-  issueCount?: number;
+type AdminBook = {
+  id: number;
+  bookName: string;
+  authorName: string;
+  category: string;
+  numberOfCopies: number;
 };
 
 const ManageBooksAdmin: React.FC = () => {
-  const [books, setBooks] = useState<Book[]>([]);
+  const [books, setBooks] = useState<AdminBook[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [search, setSearch] = useState<string>("");
   const [refreshing, setRefreshing] = useState<boolean>(false);
 
+  // Fetch books
   const loadBooks = async () => {
     setLoading(true);
     try {
       const data = await apiFetch("/admin/all-books");
-      // backend returns list of Books; ensure shape fits frontend
       setBooks(data || []);
     } catch (err: any) {
       console.error("Load books error:", err);
-      toast.error(err?.message ?? "Failed to load books");
+      toast.error("Failed to load books");
     } finally {
       setLoading(false);
     }
@@ -60,12 +56,13 @@ const ManageBooksAdmin: React.FC = () => {
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
     if (!q) return books;
+
     return books.filter((b) =>
         [
-          b.bookName ?? "",
-          b.authorName ?? "",
-          b.bookCategory ?? "",
-          String(b.bookId ?? ""),
+          b.bookName,
+          b.authorName,
+          b.category,
+          String(b.id),
         ]
             .join(" ")
             .toLowerCase()
@@ -78,31 +75,26 @@ const ManageBooksAdmin: React.FC = () => {
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-3xl font-bold text-foreground">Manage Books</h1>
-            <p className="text-muted-foreground mt-1">
-              View all books (read-only). Use search to filter.
-            </p>
+            <p className="text-muted-foreground mt-1">View all books (Admin only).</p>
           </div>
 
-          <div className="flex items-center gap-2">
-            <Button onClick={handleRefresh} variant="ghost" className="gap-2">
-              <RefreshCw className="h-4 w-4" />
-              {refreshing ? "Refreshing..." : "Refresh"}
-            </Button>
-          </div>
+          <Button onClick={handleRefresh} variant="ghost" className="gap-2">
+            <RefreshCw className="h-4 w-4" />
+            {refreshing ? "Refreshing..." : "Refresh"}
+          </Button>
         </div>
 
         <Card>
-          <CardHeader className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+          <CardHeader className="flex flex-col md:flex-row md:justify-between gap-4">
             <CardTitle>All Books</CardTitle>
 
-            <div className="flex items-center gap-3 w-full md:w-auto">
+            <div className="flex items-center gap-3">
               <Input
-                  placeholder="Search by title, author, category or id..."
+                  placeholder="Search title, author, category..."
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
-                  className="min-w-0"
               />
-              <Button onClick={() => setSearch("")} variant="ghost">
+              <Button variant="ghost" onClick={() => setSearch("")}>
                 Clear
               </Button>
             </div>
@@ -120,42 +112,20 @@ const ManageBooksAdmin: React.FC = () => {
                       <TableRow>
                         <TableHead>Title</TableHead>
                         <TableHead>Author</TableHead>
-                        <TableHead>Copies</TableHead>
                         <TableHead>Category</TableHead>
-                        <TableHead>Issued</TableHead>
-                        <TableHead>Issue Date</TableHead>
-                        <TableHead>Due Date</TableHead>
-                        <TableHead>Issue Count</TableHead>
+                        <TableHead>Copies</TableHead>
                       </TableRow>
                     </TableHeader>
 
                     <TableBody>
                       {filtered.map((b) => (
-                          <TableRow key={b.bookId ?? Math.random()}>
-                            <TableCell className="font-medium">{b.bookName ?? "-"}</TableCell>
-                            <TableCell className="text-muted-foreground">{b.authorName ?? "-"}</TableCell>
-                            <TableCell className="text-muted-foreground">
-                              {b.numberOfCopies ?? 0}
-                            </TableCell>
+                          <TableRow key={b.id}>
+                            <TableCell className="font-medium">{b.bookName}</TableCell>
+                            <TableCell>{b.authorName}</TableCell>
                             <TableCell>
-                              <Badge variant="outline">{b.bookCategory ?? "—"}</Badge>
+                              <Badge variant="outline">{b.category}</Badge>
                             </TableCell>
-                            <TableCell>
-                              {b.issued ? (
-                                  <Badge variant="default">Yes</Badge>
-                              ) : (
-                                  <Badge variant="secondary">No</Badge>
-                              )}
-                            </TableCell>
-                            <TableCell className="text-muted-foreground">
-                              {b.issueDate ? new Date(b.issueDate).toLocaleDateString() : "—"}
-                            </TableCell>
-                            <TableCell className="text-muted-foreground">
-                              {b.dueDate ? new Date(b.dueDate).toLocaleDateString() : "—"}
-                            </TableCell>
-                            <TableCell>
-                              <Badge variant="secondary">{b.issueCount ?? 0}</Badge>
-                            </TableCell>
+                            <TableCell>{b.numberOfCopies}</TableCell>
                           </TableRow>
                       ))}
                     </TableBody>
